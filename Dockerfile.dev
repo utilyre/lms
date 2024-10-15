@@ -1,0 +1,7 @@
+FROM golang:1.23.0-alpine3.20
+
+RUN go install github.com/mitranim/gow@latest
+
+WORKDIR /app
+
+CMD ["gow", "-r=false", "run", "./cmd/server", "-port=80"]
