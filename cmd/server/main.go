@@ -46,6 +46,56 @@ func main() {
 		return c.String(http.StatusOK, "Hello world!")
 	})
 
+	e.PUT("/users/:id", func(c echo.Context) error {
+		type Req struct {
+			ID    int32  `param:"id"`
+			Name  string `json:"name"`
+			Email string `json:"email"`
+			Role  string `json:"role"`
+		}
+
+		var req Req
+		if err := c.Bind(&req); err != nil {
+			return err
+		}
+
+		user := repository.User{
+			ID:    req.ID,
+			Name:  req.Name,
+			Email: req.Email,
+			Role:  req.Role,
+		}
+
+		if _, err := db.
+			NewUpdate().
+			Model(&user).
+			OmitZero().
+			WherePK().
+			Exec(c.Request().Context()); err != nil {
+			return err
+		}
+		if err := db.
+			NewSelect().
+			Model(&user).
+			WherePK().
+			Scan(c.Request().Context()); err != nil {
+			return err
+		}
+
+		type Resp struct {
+			ID    int32  `json:"id"`
+			Name  string `json:"name"`
+			Email string `json:"email"`
+			Role  string `json:"role"`
+		}
+		return c.JSON(http.StatusCreated, Resp{
+			ID:    user.ID,
+			Name:  user.Name,
+			Email: user.Email,
+			Role:  user.Role,
+		})
+	})
+
 	e.GET("/users/:id", func(c echo.Context) error {
 		type Req struct {
 			ID int32 `param:"id"`
