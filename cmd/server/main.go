@@ -46,6 +46,29 @@ func main() {
 		return c.String(http.StatusOK, "Hello world!")
 	})
 
+	e.DELETE("/users/:id", func(c echo.Context) error {
+		type Req struct {
+			ID int32 `param:"id"`
+		}
+
+		var req Req
+		if err := c.Bind(&req); err != nil {
+			return err
+		}
+
+		if _, err := db.
+			NewDelete().
+			Model((*repository.User)(nil)).
+			Where("id = ?", req.ID).
+			Exec(c.Request().Context()); err != nil {
+			return err
+		}
+
+		return c.JSON(http.StatusOK, map[string]any{
+			"message": "User deleted successfully",
+		})
+	})
+
 	e.PUT("/users/:id", func(c echo.Context) error {
 		type Req struct {
 			ID    int32  `param:"id"`
