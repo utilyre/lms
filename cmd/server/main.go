@@ -2,13 +2,14 @@ package main
 
 import (
 	"database/sql"
-	"net/http"
 	"flag"
+	"net/http"
+	"os"
 
 	"github.com/labstack/echo/v4"
 	"github.com/uptrace/bun"
-	"github.com/uptrace/bun/dialect/sqlitedialect"
-	"github.com/uptrace/bun/driver/sqliteshim"
+	"github.com/uptrace/bun/dialect/pgdialect"
+	"github.com/uptrace/bun/driver/pgdriver"
 )
 
 var listenPort string
@@ -19,11 +20,8 @@ func init() {
 }
 
 func main() {
-	sqldb, err := sql.Open(sqliteshim.ShimName, "file::memory:?cache=shared")
-	if err != nil {
-		panic(err)
-	}
-	db := bun.NewDB(sqldb, sqlitedialect.New())
+	sqldb := sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN(os.Getenv("DB_URL"))))
+	db := bun.NewDB(sqldb, pgdialect.New())
 	_ = db
 
 	e := echo.New()
@@ -32,5 +30,5 @@ func main() {
 		return c.String(http.StatusOK, "Hello world!")
 	})
 
-	e.Logger.Fatal(e.Start(":"+listenPort))
+	e.Logger.Fatal(e.Start(":" + listenPort))
 }
