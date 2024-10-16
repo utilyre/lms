@@ -1,8 +1,10 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"flag"
+	"log"
 	"net/http"
 	"os"
 
@@ -10,6 +12,7 @@ import (
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/pgdialect"
 	"github.com/uptrace/bun/driver/pgdriver"
+	"github.com/utilyre/lms/internal/repository"
 )
 
 var listenPort string
@@ -20,9 +23,17 @@ func init() {
 }
 
 func main() {
+	log.Printf("Connecting to %s\n", os.Getenv("DB_URL"))
 	sqldb := sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN(os.Getenv("DB_URL"))))
 	db := bun.NewDB(sqldb, pgdialect.New())
-	_ = db
+
+	if _, err := db.
+		NewCreateTable().
+		IfNotExists().
+		Model((*repository.User)(nil)).
+		Exec(context.TODO()); err != nil {
+		log.Fatal(err)
+	}
 
 	e := echo.New()
 
