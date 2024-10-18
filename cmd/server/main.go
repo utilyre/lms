@@ -46,7 +46,9 @@ func main() {
 	}
 
 	userSVC := service.UserService{DB: db}
+	bookSVC := service.BookService{DB: db}
 	userHandler := handler.UserHandler{UserSVC: userSVC}
+	bookHandler := handler.BookHandler{BookSVC: bookSVC}
 
 	e := echo.New()
 
@@ -62,157 +64,10 @@ func main() {
 	e.GET("/users/:id", userHandler.Get)
 	e.DELETE("/users/:id", userHandler.Delete)
 
-	e.DELETE("/books/:id", func(c echo.Context) error {
-		type Req struct {
-			ID int32 `param:"id"`
-		}
-
-		var req Req
-		if err := c.Bind(&req); err != nil {
-			return err
-		}
-
-		if _, err := db.
-			NewDelete().
-			Model((*repository.Book)(nil)).
-			Where("id = ?", req.ID).
-			Exec(c.Request().Context()); err != nil {
-			return err
-		}
-
-		return c.JSON(http.StatusOK, map[string]any{
-			"message": "Book deleted successfully",
-		})
-	})
-
-	e.PUT("/books/:id", func(c echo.Context) error {
-		type Req struct {
-			ID                 int32  `param:"id"`
-			Title              string `json:"title"`
-			Author             string `json:"author"`
-			ISBN               string `json:"isbn"`
-			AvailabilityStatus string `json:"availability_status"`
-		}
-
-		var req Req
-		if err := c.Bind(&req); err != nil {
-			return err
-		}
-
-		book := repository.Book{
-			ID:                 req.ID,
-			Title:              req.Title,
-			Author:             req.Author,
-			ISBN:               req.ISBN,
-			AvailabilityStatus: req.AvailabilityStatus,
-		}
-
-		// TODO: make these a singular tx
-		if _, err := db.
-			NewUpdate().
-			Model(&book).
-			OmitZero().
-			WherePK().
-			Exec(c.Request().Context()); err != nil {
-			return err
-		}
-		if err := db.
-			NewSelect().
-			Model(&book).
-			WherePK().
-			Scan(c.Request().Context()); err != nil {
-			return err
-		}
-
-		type Resp struct {
-			ID                 int32  `json:"id"`
-			Title              string `json:"title"`
-			Author             string `json:"author"`
-			ISBN               string `json:"isbn"`
-			AvailabilityStatus string `json:"availability_status"`
-		}
-		return c.JSON(http.StatusCreated, Resp{
-			ID:                 book.ID,
-			Title:              book.Title,
-			Author:             book.Author,
-			ISBN:               book.ISBN,
-			AvailabilityStatus: book.AvailabilityStatus,
-		})
-	})
-
-	e.GET("/books/:id", func(c echo.Context) error {
-		type Req struct {
-			ID int32 `param:"id"`
-		}
-
-		var req Req
-		if err := c.Bind(&req); err != nil {
-			return err
-		}
-
-		var book repository.Book
-		if err := db.
-			NewSelect().
-			Model(&book).
-			Where("id = ?", req.ID).
-			Scan(c.Request().Context()); err != nil {
-			return err
-		}
-
-		type Resp struct {
-			ID                 int32  `json:"id"`
-			Title              string `json:"title"`
-			Author             string `json:"author"`
-			ISBN               string `json:"isbn"`
-			AvailabilityStatus string `json:"availability_status"`
-		}
-		return c.JSON(http.StatusCreated, Resp{
-			ID:                 book.ID,
-			Title:              book.Title,
-			Author:             book.Author,
-			ISBN:               book.ISBN,
-			AvailabilityStatus: book.AvailabilityStatus,
-		})
-	})
-
-	e.POST("/books", func(c echo.Context) error {
-		type Req struct {
-			Title  string `json:"title"`
-			Author string `json:"author"`
-			ISBN   string `json:"isbn"`
-		}
-		var req Req
-		if err := c.Bind(&req); err != nil {
-			return err
-		}
-
-		book := repository.Book{
-			Title:              req.Title,
-			Author:             req.Author,
-			ISBN:               req.ISBN,
-			AvailabilityStatus: "available",
-		}
-
-		_, err := db.NewInsert().Model(&book).Exec(c.Request().Context())
-		if err != nil {
-			return err
-		}
-
-		type Resp struct {
-			ID                 int32  `json:"id"`
-			Title              string `json:"title"`
-			Author             string `json:"author"`
-			ISBN               string `json:"isbn"`
-			AvailabilityStatus string `json:"availability_status"`
-		}
-		return c.JSON(http.StatusCreated, Resp{
-			ID:                 book.ID,
-			Title:              book.Title,
-			Author:             book.Author,
-			ISBN:               book.ISBN,
-			AvailabilityStatus: book.AvailabilityStatus,
-		})
-	})
+	e.DELETE("/books/:id", bookHandler.Delete)
+	e.PUT("/books/:id", bookHandler.Update)
+	e.GET("/books/:id", bookHandler.Get)
+	e.POST("/books", bookHandler.Create)
 
 	e.Logger.Fatal(e.Start(":" + listenPort))
 }
