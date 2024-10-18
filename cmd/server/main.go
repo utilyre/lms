@@ -14,7 +14,7 @@ import (
 	"github.com/uptrace/bun/dialect/pgdialect"
 	"github.com/uptrace/bun/driver/pgdriver"
 	"github.com/utilyre/lms/internal/repository"
-	"golang.org/x/crypto/bcrypt"
+	"github.com/utilyre/lms/internal/service"
 )
 
 var listenPort string
@@ -28,6 +28,8 @@ func main() {
 	log.Printf("Connecting to %s\n", os.Getenv("DB_URL"))
 	sqldb := sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN(os.Getenv("DB_URL"))))
 	db := bun.NewDB(sqldb, pgdialect.New())
+
+	userSVC := service.UserService{DB: db}
 
 	if _, err := db.
 		NewCreateTable().
@@ -209,17 +211,12 @@ func main() {
 		type Req struct {
 			ID int32 `param:"id"`
 		}
-
 		var req Req
 		if err := c.Bind(&req); err != nil {
 			return err
 		}
 
-		if _, err := db.
-			NewDelete().
-			Model((*repository.User)(nil)).
-			Where("id = ?", req.ID).
-			Exec(c.Request().Context()); err != nil {
+		if err := userSVC.DeleteByID(c.Request().Context(), req.ID); err != nil {
 			return err
 		}
 
@@ -235,32 +232,17 @@ func main() {
 			Email string `json:"email"`
 			Role  string `json:"role"`
 		}
-
 		var req Req
 		if err := c.Bind(&req); err != nil {
 			return err
 		}
 
-		user := repository.User{
-			ID:    req.ID,
+		user, err := userSVC.UpdateByID(c.Request().Context(), req.ID, service.UserUpdateByIDParams{
 			Name:  req.Name,
 			Email: req.Email,
 			Role:  req.Role,
-		}
-
-		if _, err := db.
-			NewUpdate().
-			Model(&user).
-			OmitZero().
-			WherePK().
-			Exec(c.Request().Context()); err != nil {
-			return err
-		}
-		if err := db.
-			NewSelect().
-			Model(&user).
-			WherePK().
-			Scan(c.Request().Context()); err != nil {
+		})
+		if err != nil {
 			return err
 		}
 
@@ -282,18 +264,13 @@ func main() {
 		type Req struct {
 			ID int32 `param:"id"`
 		}
-
 		var req Req
 		if err := c.Bind(&req); err != nil {
 			return err
 		}
 
-		var user repository.User
-		if err := db.
-			NewSelect().
-			Model(&user).
-			Where("id = ?", req.ID).
-			Scan(c.Request().Context()); err != nil {
+		user, err := userSVC.GetByID(c.Request().Context(), req.ID)
+		if err != nil {
 			return err
 		}
 
@@ -318,25 +295,17 @@ func main() {
 			Password string `json:"password"`
 			Role     string `json:"role"`
 		}
-
 		var req Req
 		if err := c.Bind(&req); err != nil {
 			return err
 		}
 
-		hash, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
-		if err != nil {
-			return err
-		}
-
-		user := repository.User{
+		user, err := userSVC.Create(c.Request().Context(), service.UserCreateParams{
 			Name:     req.Name,
 			Email:    req.Email,
-			Password: hash,
+			Password: []byte(req.Password),
 			Role:     req.Role,
-		}
-
-		_, err = db.NewInsert().Model(&user).Exec(c.Request().Context())
+		})
 		if err != nil {
 			return err
 		}
