@@ -116,14 +116,19 @@ func (bs BookService) Borrow(ctx context.Context, params BookBorrowParams) (*rep
 	return &loan, nil
 }
 
-func (bs BookService) ReturnLoan(ctx context.Context, loanID int32) (*repository.Loan, error) {
+type BookReturnLoanParams struct {
+	LoanID     int32
+	ReturnDate time.Time
+}
+
+func (bs BookService) ReturnLoan(ctx context.Context, params BookReturnLoanParams) (*repository.Loan, error) {
 	loan := repository.Loan{
-		ReturnDate: sql.NullTime{Time: time.Now(), Valid: true},
+		ReturnDate: sql.NullTime{Time: params.ReturnDate, Valid: true},
 	}
 
 	if _, err := bs.DB.
 		NewUpdate().
-		Where("id = ?", loanID).
+		Where("id = ?", params.LoanID).
 		Model(&loan).
 		Exec(ctx); err != nil {
 		return nil, err
