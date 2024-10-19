@@ -123,14 +123,19 @@ type BookReturnLoanParams struct {
 
 func (bs BookService) ReturnLoan(ctx context.Context, params BookReturnLoanParams) (*repository.Loan, error) {
 	loan := repository.Loan{
+		ID:         params.LoanID,
 		ReturnDate: sql.NullTime{Time: params.ReturnDate, Valid: true},
 	}
 
 	if _, err := bs.DB.
 		NewUpdate().
-		Where("id = ?", params.LoanID).
 		Model(&loan).
+		OmitZero().
+		WherePK().
 		Exec(ctx); err != nil {
+		return nil, err
+	}
+	if err := bs.DB.NewSelect().Model(&loan).WherePK().Scan(ctx); err != nil {
 		return nil, err
 	}
 

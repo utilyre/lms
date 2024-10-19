@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"encoding/json"
 	"net/http"
 	"time"
 
@@ -137,6 +138,27 @@ func (bh BookHandler) Create(c echo.Context) error {
 	})
 }
 
+type DateOnly struct{ time.Time }
+
+func (do DateOnly) MarshalJSON() ([]byte, error) {
+	return json.Marshal(do.Format(time.DateOnly))
+}
+
+func (do *DateOnly) UnmarshalJSON(data []byte) error {
+	var str string
+	if err := json.Unmarshal(data, &str); err != nil {
+		return err
+	}
+
+	t, err := time.Parse(time.DateOnly, str)
+	if err != nil {
+		return err
+	}
+
+	do.Time = t
+	return nil
+}
+
 func (bh BookHandler) Borrow(c echo.Context) error {
 	type Req struct {
 		UserID int32 `json:"user_id"`
@@ -156,25 +178,25 @@ func (bh BookHandler) Borrow(c echo.Context) error {
 	}
 
 	type Resp struct {
-		ID       int32     `json:"id"`
-		UserID   int32     `json:"user_id"`
-		BookID   int32     `json:"book_id"`
-		LoanDate time.Time `json:"loan_date"`
-		DueDate  time.Time `json:"due_date"`
+		ID       int32    `json:"id"`
+		UserID   int32    `json:"user_id"`
+		BookID   int32    `json:"book_id"`
+		LoanDate DateOnly `json:"loan_date"`
+		DueDate  DateOnly `json:"due_date"`
 	}
 	return c.JSON(http.StatusCreated, Resp{
 		ID:       loan.ID,
 		UserID:   loan.UserID,
 		BookID:   loan.BookID,
-		LoanDate: loan.LoanDate,
-		DueDate:  loan.DueDate,
+		LoanDate: DateOnly{loan.LoanDate},
+		DueDate:  DateOnly{loan.DueDate},
 	})
 }
 
 func (bh BookHandler) ReturnLoan(c echo.Context) error {
 	type Req struct {
-		ID         int32     `param:"id"`
-		ReturnDate time.Time `json:"return_date"`
+		ID         int32    `param:"id"`
+		ReturnDate DateOnly `json:"return_date"`
 	}
 	var req Req
 	if err := c.Bind(&req); err != nil {
@@ -183,26 +205,26 @@ func (bh BookHandler) ReturnLoan(c echo.Context) error {
 
 	loan, err := bh.BookSVC.ReturnLoan(c.Request().Context(), service.BookReturnLoanParams{
 		LoanID:     req.ID,
-		ReturnDate: req.ReturnDate,
+		ReturnDate: req.ReturnDate.Time,
 	})
 	if err != nil {
 		return err
 	}
 
 	type Resp struct {
-		ID         int32     `json:"id"`
-		UserID     int32     `json:"user_id"`
-		BookID     int32     `json:"book_id"`
-		LoanDate   time.Time `json:"loan_date"`
-		DueDate    time.Time `json:"due_date"`
-		ReturnDate time.Time `json:"return_date"`
+		ID         int32    `json:"id"`
+		UserID     int32    `json:"user_id"`
+		BookID     int32    `json:"book_id"`
+		LoanDate   DateOnly `json:"loan_date"`
+		DueDate    DateOnly `json:"due_date"`
+		ReturnDate DateOnly `json:"return_date"`
 	}
 	return c.JSON(http.StatusOK, Resp{
 		ID:         loan.ID,
 		UserID:     loan.UserID,
 		BookID:     loan.BookID,
-		LoanDate:   loan.LoanDate,
-		DueDate:    loan.DueDate,
-		ReturnDate: loan.ReturnDate.Time,
+		LoanDate:   DateOnly{loan.LoanDate},
+		DueDate:    DateOnly{loan.DueDate},
+		ReturnDate: DateOnly{loan.ReturnDate.Time},
 	})
 }
