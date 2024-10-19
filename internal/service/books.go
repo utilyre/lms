@@ -141,3 +141,29 @@ func (bs BookService) ReturnLoan(ctx context.Context, params BookReturnLoanParam
 
 	return &loan, nil
 }
+
+type BookReserveParams struct {
+	UserID int32
+	BookID int32
+}
+
+func (bs BookService) Reserve(ctx context.Context, params BookReserveParams) (*repository.Reservation, error) {
+	reservation := repository.Reservation{
+		UserID: params.UserID,
+		BookID: params.BookID,
+	}
+
+	if _, err := bs.DB.NewInsert().Model(&reservation).Exec(ctx); err != nil {
+		return nil, err
+	}
+
+	return &reservation, nil
+}
+
+func (bs BookService) CancelReservation(ctx context.Context, id int32) error {
+	if _, err := bs.DB.NewDelete().Where("id = ?", id).Exec(ctx); err != nil {
+		return err
+	}
+
+	return nil
+}
