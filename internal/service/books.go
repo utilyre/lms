@@ -2,6 +2,8 @@ package service
 
 import (
 	"context"
+	"database/sql"
+	"time"
 
 	"github.com/uptrace/bun"
 	"github.com/utilyre/lms/internal/repository"
@@ -91,4 +93,41 @@ func (bs BookService) DeleteByID(ctx context.Context, id int32) error {
 	}
 
 	return nil
+}
+
+type BookBorrowParams struct {
+	UserID int32
+	BookID int32
+}
+
+func (bs BookService) Borrow(ctx context.Context, params BookBorrowParams) (*repository.Loan, error) {
+	now := time.Now()
+	loan := repository.Loan{
+		UserID:   params.UserID,
+		BookID:   params.BookID,
+		LoanDate: now,
+		DueDate:  now.Add(14 * 24 * time.Hour),
+	}
+
+	if _, err := bs.DB.NewInsert().Model(&loan).Exec(ctx); err != nil {
+		return nil, err
+	}
+
+	return &loan, nil
+}
+
+func (bs BookService) ReturnLoan(ctx context.Context, loanID int32) (*repository.Loan, error) {
+	loan := repository.Loan{
+		ReturnDate: sql.NullTime{Time: time.Now(), Valid: true},
+	}
+
+	if _, err := bs.DB.
+		NewUpdate().
+		Where("id = ?", loanID).
+		Model(&loan).
+		Exec(ctx); err != nil {
+		return nil, err
+	}
+
+	return &loan, nil
 }
