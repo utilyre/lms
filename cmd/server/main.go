@@ -75,6 +75,8 @@ func main() {
 	e.PUT("/books/:id", bookHandler.Update)
 	e.GET("/books/:id", bookHandler.Get)
 	e.POST("/books", bookHandler.Create)
+	e.POST("/loans", bookHandler.Borrow)
+	e.PUT("/loans/:id", bookHandler.ReturnLoan)
 
 	e.Logger.Fatal(e.Start(":" + listenPort))
 }

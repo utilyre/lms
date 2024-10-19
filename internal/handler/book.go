@@ -2,6 +2,7 @@ package handler
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/labstack/echo/v4"
 	"github.com/utilyre/lms/internal/service"
@@ -133,5 +134,75 @@ func (bh BookHandler) Create(c echo.Context) error {
 		Author:             book.Author,
 		ISBN:               book.ISBN,
 		AvailabilityStatus: book.AvailabilityStatus,
+	})
+}
+
+func (bh BookHandler) Borrow(c echo.Context) error {
+	type Req struct {
+		UserID int32 `json:"user_id"`
+		BookID int32 `json:"book_id"`
+	}
+	var req Req
+	if err := c.Bind(&req); err != nil {
+		return err
+	}
+
+	loan, err := bh.BookSVC.Borrow(c.Request().Context(), service.BookBorrowParams{
+		UserID: req.UserID,
+		BookID: req.BookID,
+	})
+	if err != nil {
+		return err
+	}
+
+	type Resp struct {
+		ID       int32     `json:"id"`
+		UserID   int32     `json:"user_id"`
+		BookID   int32     `json:"book_id"`
+		LoanDate time.Time `json:"loan_date"`
+		DueDate  time.Time `json:"due_date"`
+	}
+	return c.JSON(http.StatusCreated, Resp{
+		ID:       loan.ID,
+		UserID:   loan.UserID,
+		BookID:   loan.BookID,
+		LoanDate: loan.LoanDate,
+		DueDate:  loan.DueDate,
+	})
+}
+
+func (bh BookHandler) ReturnLoan(c echo.Context) error {
+	type Req struct {
+		ID         int32     `param:"id"`
+		ReturnDate time.Time `json:"return_date"`
+	}
+	var req Req
+	if err := c.Bind(&req); err != nil {
+		return err
+	}
+
+	loan, err := bh.BookSVC.ReturnLoan(c.Request().Context(), service.BookReturnLoanParams{
+		LoanID:     req.ID,
+		ReturnDate: req.ReturnDate,
+	})
+	if err != nil {
+		return err
+	}
+
+	type Resp struct {
+		ID         int32     `json:"id"`
+		UserID     int32     `json:"user_id"`
+		BookID     int32     `json:"book_id"`
+		LoanDate   time.Time `json:"loan_date"`
+		DueDate    time.Time `json:"due_date"`
+		ReturnDate time.Time `json:"return_date"`
+	}
+	return c.JSON(http.StatusOK, Resp{
+		ID:         loan.ID,
+		UserID:     loan.UserID,
+		BookID:     loan.BookID,
+		LoanDate:   loan.LoanDate,
+		DueDate:    loan.DueDate,
+		ReturnDate: loan.ReturnDate.Time,
 	})
 }
