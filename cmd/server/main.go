@@ -44,6 +44,13 @@ func main() {
 		Exec(context.TODO()); err != nil {
 		log.Fatal(err)
 	}
+	if _, err := db.
+		NewCreateTable().
+		IfNotExists().
+		Model((*repository.Loan)(nil)).
+		Exec(context.TODO()); err != nil {
+		log.Fatal(err)
+	}
 
 	userSVC := service.UserService{DB: db}
 	bookSVC := service.BookService{DB: db}
