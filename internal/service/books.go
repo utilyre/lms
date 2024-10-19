@@ -161,7 +161,11 @@ func (bs BookService) Reserve(ctx context.Context, params BookReserveParams) (*r
 }
 
 func (bs BookService) CancelReservation(ctx context.Context, id int32) error {
-	if _, err := bs.DB.NewDelete().Where("id = ?", id).Exec(ctx); err != nil {
+	if _, err := bs.DB.
+		NewDelete().
+		Model((*repository.Reservation)(nil)).
+		Where("id = ?", id).
+		Exec(ctx); err != nil {
 		return err
 	}
 

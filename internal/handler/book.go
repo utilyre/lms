@@ -228,3 +228,51 @@ func (bh BookHandler) ReturnLoan(c echo.Context) error {
 		ReturnDate: DateOnly{loan.ReturnDate.Time},
 	})
 }
+
+func (bh BookHandler) Reserve(c echo.Context) error {
+	type Req struct {
+		UserID int32 `json:"user_id"`
+		BookID int32 `json:"book_id"`
+	}
+	var req Req
+	if err := c.Bind(&req); err != nil {
+		return err
+	}
+
+	reservation, err := bh.BookSVC.Reserve(c.Request().Context(), service.BookReserveParams{
+		UserID: req.UserID,
+		BookID: req.BookID,
+	})
+	if err != nil {
+		return err
+	}
+
+	type Resp struct {
+		ID     int32 `json:"id"`
+		UserID int32 `json:"user_id"`
+		BookID int32 `json:"book_id"`
+	}
+	return c.JSON(http.StatusCreated, Resp{
+		ID:     reservation.ID,
+		UserID: reservation.UserID,
+		BookID: reservation.BookID,
+	})
+}
+
+func (bh BookHandler) CancelReservation(c echo.Context) error {
+	type Req struct {
+		ID int32 `param:"id"`
+	}
+	var req Req
+	if err := c.Bind(&req); err != nil {
+		return err
+	}
+
+	if err := bh.BookSVC.CancelReservation(c.Request().Context(), req.ID); err != nil {
+		return err
+	}
+
+	return c.JSON(http.StatusOK, map[string]any{
+		"message": "Reservation canceled successfully",
+	})
+}

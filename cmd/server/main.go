@@ -51,6 +51,13 @@ func main() {
 		Exec(context.TODO()); err != nil {
 		log.Fatal(err)
 	}
+	if _, err := db.
+		NewCreateTable().
+		IfNotExists().
+		Model((*repository.Reservation)(nil)).
+		Exec(context.TODO()); err != nil {
+		log.Fatal(err)
+	}
 
 	userSVC := service.UserService{DB: db}
 	bookSVC := service.BookService{DB: db}
@@ -77,6 +84,8 @@ func main() {
 	e.POST("/books", bookHandler.Create)
 	e.POST("/loans", bookHandler.Borrow)
 	e.PUT("/loans/:id", bookHandler.ReturnLoan)
+	e.POST("/reservations", bookHandler.Reserve)
+	e.DELETE("/reservations/:id", bookHandler.CancelReservation)
 
 	e.Logger.Fatal(e.Start(":" + listenPort))
 }
