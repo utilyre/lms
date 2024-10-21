@@ -64,8 +64,11 @@ func main() {
 
 	userSVC := service.UserService{DB: db}
 	bookSVC := service.BookService{DB: db}
+	reportSVC := service.ReportService{DB: db}
+
 	userHandler := handler.UserHandler{UserSVC: userSVC}
 	bookHandler := handler.BookHandler{BookSVC: bookSVC}
+	reportHandler := handler.ReportHandler{ReportSVC: reportSVC}
 
 	e := echo.New()
 
@@ -89,6 +92,8 @@ func main() {
 	e.PUT("/loans/:id", bookHandler.ReturnLoan)
 	e.POST("/reservations", bookHandler.Reserve)
 	e.DELETE("/reservations/:id", bookHandler.CancelReservation)
+
+	e.GET("/reports/overdue-loans", reportHandler.GetOverdueLoans)
 
 	e.Logger.Fatal(e.Start(":" + listenPort))
 }
