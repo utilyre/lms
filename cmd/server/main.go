@@ -95,6 +95,7 @@ func main() {
 
 	e.GET("/reports/overdue-loans", reportHandler.GetOverdueLoans)
 	e.GET("/reports/popular-books", reportHandler.GetPopularBooks)
+	e.GET("/reports/user-activity/:id", reportHandler.GetUserActivity)
 
 	e.Logger.Fatal(e.Start(":" + listenPort))
 }

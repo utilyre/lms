@@ -51,3 +51,18 @@ func (rs ReportService) GetPopularBooks(ctx context.Context) ([]ReportGetPopular
 
 	return results, nil
 }
+
+func (rs ReportService) GetUserActivity(ctx context.Context, id int32) ([]repository.Loan, error) {
+	var loans []repository.Loan
+
+	if err := rs.DB.
+		NewSelect().
+		Column("id", "book_id", "loan_date", "due_date", "return_date").
+		Model(&loans).
+		Where("user_id = ?", id).
+		Scan(ctx); err != nil {
+		return nil, err
+	}
+
+	return loans, nil
+}
