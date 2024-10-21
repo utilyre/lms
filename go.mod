@@ -7,10 +7,12 @@ require (
 	github.com/uptrace/bun v1.2.3
 	github.com/uptrace/bun/dialect/pgdialect v1.2.3
 	github.com/uptrace/bun/driver/pgdriver v1.2.3
+	github.com/uptrace/bun/extra/bundebug v1.2.3
 	golang.org/x/crypto v0.26.0
 )
 
 require (
+	github.com/fatih/color v1.17.0 // indirect
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/labstack/gommon v0.4.2 // indirect

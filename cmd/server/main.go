@@ -13,6 +13,7 @@ import (
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/pgdialect"
 	"github.com/uptrace/bun/driver/pgdriver"
+	"github.com/uptrace/bun/extra/bundebug"
 	"github.com/utilyre/lms/internal/handler"
 	"github.com/utilyre/lms/internal/repository"
 	"github.com/utilyre/lms/internal/service"
@@ -29,6 +30,8 @@ func main() {
 	log.Printf("Connecting to %s\n", os.Getenv("DB_URL"))
 	sqldb := sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN(os.Getenv("DB_URL"))))
 	db := bun.NewDB(sqldb, pgdialect.New())
+
+	db.AddQueryHook(bundebug.NewQueryHook(bundebug.WithVerbose(true)))
 
 	if _, err := db.
 		NewCreateTable().
