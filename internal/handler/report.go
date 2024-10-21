@@ -36,3 +36,12 @@ func (rh ReportHandler) GetOverdueLoans(c echo.Context) error {
 	}
 	return c.JSON(http.StatusOK, resp)
 }
+
+func (rh ReportHandler) GetPopularBooks(c echo.Context) error {
+	results, err := rh.ReportSVC.GetPopularBooks(c.Request().Context())
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(http.StatusOK, results)
+}

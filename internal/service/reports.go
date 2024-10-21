@@ -30,8 +30,24 @@ func (rs ReportService) GetOverdueLoans(ctx context.Context) ([]repository.Loan,
 	return loans, nil
 }
 
-// func (rs ReportService) GetPopularBooks(ctx context.Context) ([]repository.Book, error) {
-// 	var books []repository.Book
+type ReportGetPopularBooksResult struct {
+	ID      int32  `json:"id"`
+	Title   string `json:"title"`
+	Borrows int    `json:"borrows"`
+}
 
-// 	rs.DB.NewSelect().Model(&books).Where()
-// }
+func (rs ReportService) GetPopularBooks(ctx context.Context) ([]ReportGetPopularBooksResult, error) {
+	var results []ReportGetPopularBooksResult
+
+	if err := rs.DB.
+		NewSelect().
+		Model((*repository.Book)(nil)).
+		ColumnExpr("book.id id, book.title title, COUNT(*) borrows").
+		Join("JOIN loans loan ON loan.book_id = book.id").
+		Group("book.id").
+		Scan(ctx, &results); err != nil {
+		return nil, err
+	}
+
+	return results, nil
+}

@@ -94,6 +94,7 @@ func main() {
 	e.DELETE("/reservations/:id", bookHandler.CancelReservation)
 
 	e.GET("/reports/overdue-loans", reportHandler.GetOverdueLoans)
+	e.GET("/reports/popular-books", reportHandler.GetPopularBooks)
 
 	e.Logger.Fatal(e.Start(":" + listenPort))
 }
