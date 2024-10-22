@@ -7,7 +7,7 @@ type User struct {
 
 	ID       int32 `bun:",pk,autoincrement"`
 	Name     string
-	Email    string
+	Email    string `bun:",unique"`
 	Password []byte
 	Role     string
 }

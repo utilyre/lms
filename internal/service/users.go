@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"regexp"
@@ -15,6 +16,8 @@ var (
 	ErrRequired     = errors.New("required")
 	ErrTooShort     = errors.New("too short")
 	ErrInvalidEmail = errors.New("invalid email")
+	ErrInvalidID    = errors.New("invalid id")
+	ErrUserNotFound = errors.new("user not found")
 )
 
 type ValidationError struct {
@@ -90,12 +93,23 @@ func (us UserService) Create(ctx context.Context, params UserCreateParams) (*rep
 }
 
 func (us UserService) GetByID(ctx context.Context, id int32) (*repository.User, error) {
+	if id < 1 {
+		return nil, ValidationError{
+			Field: "id",
+			Err:   ErrInvalidID,
+		}
+	}
+
 	var user repository.User
 	if err := us.DB.
 		NewSelect().
 		Model(&user).
 		Where("id = ?", id).
 		Scan(ctx); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrUserNotFound
+		}
+
 		return nil, err
 	}
 
@@ -109,6 +123,31 @@ type UserUpdateByIDParams struct {
 }
 
 func (us UserService) UpdateByID(ctx context.Context, id int32, params UserUpdateByIDParams) (*repository.User, error) {
+	if id < 1 {
+		return nil, ValidationError{
+			Field: "id",
+			Err:   ErrInvalidID,
+		}
+	}
+	if len(params.Name) == 0 {
+		return nil, ValidationError{
+			Field: "name",
+			Err:   ErrRequired,
+		}
+	}
+	if len(params.Email) == 0 {
+		return nil, ValidationError{
+			Field: "email",
+			Err:   ErrRequired,
+		}
+	}
+	if !reEmail.Match([]byte(params.Email)) {
+		return nil, ValidationError{
+			Field: "email",
+			Err:   ErrInvalidEmail,
+		}
+	}
+
 	user := repository.User{
 		Name:  params.Name,
 		Email: params.Email,
@@ -135,6 +174,13 @@ func (us UserService) UpdateByID(ctx context.Context, id int32, params UserUpdat
 }
 
 func (us UserService) DeleteByID(ctx context.Context, id int32) error {
+	if id < 1 {
+		return ValidationError{
+			Field: "id",
+			Err:   ErrInvalidID,
+		}
+	}
+
 	if _, err := us.DB.
 		NewDelete().
 		Model((*repository.User)(nil)).
