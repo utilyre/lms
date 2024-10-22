@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"time"
 
@@ -25,6 +26,14 @@ func (bh BookHandler) Delete(c echo.Context) error {
 
 	err := bh.BookSVC.DeleteByID(c.Request().Context(), req.ID)
 	if err != nil {
+		var validationErr service.ValidationError
+		if errors.As(err, &validationErr) {
+			return c.JSON(http.StatusUnprocessableEntity, map[string]any{
+				"type":    "validation",
+				"message": validationErr.Error(),
+			})
+		}
+
 		return err
 	}
 
@@ -53,6 +62,14 @@ func (bh BookHandler) Update(c echo.Context) error {
 		AvailabilityStatus: req.AvailabilityStatus,
 	})
 	if err != nil {
+		var validationErr service.ValidationError
+		if errors.As(err, &validationErr) {
+			return c.JSON(http.StatusUnprocessableEntity, map[string]any{
+				"type":    "validation",
+				"message": validationErr.Error(),
+			})
+		}
+
 		return err
 	}
 
@@ -83,6 +100,14 @@ func (bh BookHandler) Get(c echo.Context) error {
 
 	book, err := bh.BookSVC.GetByID(c.Request().Context(), req.ID)
 	if err != nil {
+		var validationErr service.ValidationError
+		if errors.As(err, &validationErr) {
+			return c.JSON(http.StatusUnprocessableEntity, map[string]any{
+				"type":    "validation",
+				"message": validationErr.Error(),
+			})
+		}
+
 		return err
 	}
 
@@ -119,6 +144,14 @@ func (bh BookHandler) Create(c echo.Context) error {
 		ISBN:   req.ISBN,
 	})
 	if err != nil {
+		var validationErr service.ValidationError
+		if errors.As(err, &validationErr) {
+			return c.JSON(http.StatusUnprocessableEntity, map[string]any{
+				"type":    "validation",
+				"message": validationErr.Error(),
+			})
+		}
+
 		return err
 	}
 
@@ -174,6 +207,14 @@ func (bh BookHandler) Borrow(c echo.Context) error {
 		BookID: req.BookID,
 	})
 	if err != nil {
+		var validationErr service.ValidationError
+		if errors.As(err, &validationErr) {
+			return c.JSON(http.StatusUnprocessableEntity, map[string]any{
+				"type":    "validation",
+				"message": validationErr.Error(),
+			})
+		}
+
 		return err
 	}
 
@@ -208,6 +249,14 @@ func (bh BookHandler) ReturnLoan(c echo.Context) error {
 		ReturnDate: req.ReturnDate.Time,
 	})
 	if err != nil {
+		var validationErr service.ValidationError
+		if errors.As(err, &validationErr) {
+			return c.JSON(http.StatusUnprocessableEntity, map[string]any{
+				"type":    "validation",
+				"message": validationErr.Error(),
+			})
+		}
+
 		return err
 	}
 
@@ -244,6 +293,14 @@ func (bh BookHandler) Reserve(c echo.Context) error {
 		BookID: req.BookID,
 	})
 	if err != nil {
+		var validationErr service.ValidationError
+		if errors.As(err, &validationErr) {
+			return c.JSON(http.StatusUnprocessableEntity, map[string]any{
+				"type":    "validation",
+				"message": validationErr.Error(),
+			})
+		}
+
 		return err
 	}
 
@@ -269,6 +326,14 @@ func (bh BookHandler) CancelReservation(c echo.Context) error {
 	}
 
 	if err := bh.BookSVC.CancelReservation(c.Request().Context(), req.ID); err != nil {
+		var validationErr service.ValidationError
+		if errors.As(err, &validationErr) {
+			return c.JSON(http.StatusUnprocessableEntity, map[string]any{
+				"type":    "validation",
+				"message": validationErr.Error(),
+			})
+		}
+
 		return err
 	}
 
