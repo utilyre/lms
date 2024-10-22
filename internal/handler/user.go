@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -21,6 +22,14 @@ func (uh UserHandler) Delete(c echo.Context) error {
 	}
 
 	if err := uh.UserSVC.DeleteByID(c.Request().Context(), req.ID); err != nil {
+		var validationErr service.ValidationError
+		if errors.As(err, &validationErr) {
+			return c.JSON(http.StatusUnprocessableEntity, map[string]any{
+				"type":    "validation",
+				"message": validationErr.Error(),
+			})
+		}
+
 		return err
 	}
 
@@ -47,6 +56,14 @@ func (uh UserHandler) Update(c echo.Context) error {
 		Role:  req.Role,
 	})
 	if err != nil {
+		var validationErr service.ValidationError
+		if errors.As(err, &validationErr) {
+			return c.JSON(http.StatusUnprocessableEntity, map[string]any{
+				"type":    "validation",
+				"message": validationErr.Error(),
+			})
+		}
+
 		return err
 	}
 
@@ -75,6 +92,14 @@ func (uh UserHandler) Get(c echo.Context) error {
 
 	user, err := uh.UserSVC.GetByID(c.Request().Context(), req.ID)
 	if err != nil {
+		var validationErr service.ValidationError
+		if errors.As(err, &validationErr) {
+			return c.JSON(http.StatusUnprocessableEntity, map[string]any{
+				"type":    "validation",
+				"message": validationErr.Error(),
+			})
+		}
+
 		return err
 	}
 
@@ -111,6 +136,14 @@ func (uh UserHandler) Create(c echo.Context) error {
 		Role:     req.Role,
 	})
 	if err != nil {
+		var validationErr service.ValidationError
+		if errors.As(err, &validationErr) {
+			return c.JSON(http.StatusUnprocessableEntity, map[string]any{
+				"type":    "validation",
+				"message": validationErr.Error(),
+			})
+		}
+
 		return err
 	}
 

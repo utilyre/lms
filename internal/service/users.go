@@ -17,7 +17,7 @@ var (
 	ErrTooShort     = errors.New("too short")
 	ErrInvalidEmail = errors.New("invalid email")
 	ErrInvalidID    = errors.New("invalid id")
-	ErrUserNotFound = errors.new("user not found")
+	ErrUserNotFound = errors.New("user not found")
 )
 
 type ValidationError struct {
