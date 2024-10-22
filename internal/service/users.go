@@ -2,11 +2,33 @@ package service
 
 import (
 	"context"
+	"errors"
+	"fmt"
+	"regexp"
 
 	"github.com/uptrace/bun"
 	"github.com/utilyre/lms/internal/repository"
 	"golang.org/x/crypto/bcrypt"
 )
+
+var (
+	ErrRequired     = errors.New("required")
+	ErrTooShort     = errors.New("too short")
+	ErrInvalidEmail = errors.New("invalid email")
+)
+
+type ValidationError struct {
+	Field string
+	Err   error
+}
+
+func (ve ValidationError) Error() string {
+	return fmt.Sprintf("%s: %v", ve.Field, ve.Err)
+}
+
+func (ve ValidationError) Unwrap() error {
+	return ve.Err
+}
 
 type UserService struct {
 	DB bun.IDB
@@ -19,7 +41,34 @@ type UserCreateParams struct {
 	Role     string
 }
 
+var reEmail = regexp.MustCompile(`^[^@]+@[^@]+\.[^@]+$`)
+
 func (us UserService) Create(ctx context.Context, params UserCreateParams) (*repository.User, error) {
+	if len(params.Name) == 0 {
+		return nil, ValidationError{
+			Field: "name",
+			Err:   ErrRequired,
+		}
+	}
+	if len(params.Email) == 0 {
+		return nil, ValidationError{
+			Field: "email",
+			Err:   ErrRequired,
+		}
+	}
+	if !reEmail.Match([]byte(params.Email)) {
+		return nil, ValidationError{
+			Field: "email",
+			Err:   ErrInvalidEmail,
+		}
+	}
+	if len(params.Password) < 3 {
+		return nil, ValidationError{
+			Field: "password",
+			Err:   ErrTooShort,
+		}
+	}
+
 	hash, err := bcrypt.GenerateFromPassword([]byte(params.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return nil, err
