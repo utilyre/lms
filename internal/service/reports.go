@@ -53,6 +53,13 @@ func (rs ReportService) GetPopularBooks(ctx context.Context) ([]ReportGetPopular
 }
 
 func (rs ReportService) GetUserActivity(ctx context.Context, id int32) ([]repository.Loan, error) {
+	if id < 1 {
+		return nil, ValidationError{
+			Field: "id",
+			Err:   ErrInvalidID,
+		}
+	}
+
 	var loans []repository.Loan
 
 	if err := rs.DB.

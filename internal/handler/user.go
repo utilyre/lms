@@ -99,6 +99,12 @@ func (uh UserHandler) Get(c echo.Context) error {
 				"message": validationErr.Error(),
 			})
 		}
+		if errors.Is(err, service.ErrUserNotFound) {
+			return c.JSON(http.StatusNotFound, map[string]any{
+				"type":    "resource",
+				"message": "user not found",
+			})
+		}
 
 		return err
 	}

@@ -3,10 +3,15 @@ package service
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"time"
 
 	"github.com/uptrace/bun"
 	"github.com/utilyre/lms/internal/repository"
+)
+
+var (
+	ErrBookNotFound = errors.New("book not found")
 )
 
 type BookService struct {
@@ -68,6 +73,10 @@ func (bs BookService) GetByID(ctx context.Context, id int32) (*repository.Book, 
 		Model(&book).
 		Where("id = ?", id).
 		Scan(ctx); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrBookNotFound
+		}
+
 		return nil, err
 	}
 

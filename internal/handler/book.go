@@ -107,6 +107,12 @@ func (bh BookHandler) Get(c echo.Context) error {
 				"message": validationErr.Error(),
 			})
 		}
+		if errors.Is(err, service.ErrBookNotFound) {
+			return c.JSON(http.StatusNotFound, map[string]any{
+				"type":    "resource",
+				"message": "book not found",
+			})
+		}
 
 		return err
 	}

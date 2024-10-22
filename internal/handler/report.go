@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -57,6 +58,14 @@ func (rh ReportHandler) GetUserActivity(c echo.Context) error {
 
 	loans, err := rh.ReportSVC.GetUserActivity(c.Request().Context(), req.ID)
 	if err != nil {
+		var validationErr service.ValidationError
+		if errors.As(err, &validationErr) {
+			return c.JSON(http.StatusUnprocessableEntity, map[string]any{
+				"type":    "validation",
+				"message": validationErr.Error(),
+			})
+		}
+
 		return err
 	}
 
