@@ -1,7 +1,7 @@
 - [x] Put constraints on database columns
 - [x] Do not let anybody borrow a reserved book (unless it's the same user)
 - [x] Cache /reports/popular-books
-- [ ] Handle duplicated column error
+- [x] Handle duplicated column error
 - [x] Do todo's inside the code
 - [x] Use database migrations
 - [ ] Handle custom errors in http handlers

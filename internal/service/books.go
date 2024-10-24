@@ -6,13 +6,16 @@ import (
 	"errors"
 	"time"
 
+	"github.com/jackc/pgerrcode"
 	"github.com/uptrace/bun"
+	"github.com/uptrace/bun/driver/pgdriver"
 	"github.com/utilyre/lms/internal/model"
 )
 
 var (
 	ErrBookNotFound = errors.New("book not found")
 	ErrBookReserved = errors.New("book reserved")
+	ErrBookBorrowed = errors.New("book borrowed")
 )
 
 type BookService struct {
@@ -208,6 +211,11 @@ func (bs BookService) Borrow(ctx context.Context, params BookBorrowParams) (*mod
 	}
 
 	if _, err := bs.DB.NewInsert().Model(&loan).Exec(ctx); err != nil {
+		if pgErr := (pgdriver.Error{}); errors.As(err, &pgErr) &&
+			pgErr.Field('C') == pgerrcode.UniqueViolation {
+			return nil, ErrBookBorrowed
+		}
+
 		return nil, err
 	}
 
@@ -272,6 +280,11 @@ func (bs BookService) Reserve(ctx context.Context, params BookReserveParams) (*m
 	}
 
 	if _, err := bs.DB.NewInsert().Model(&reservation).Exec(ctx); err != nil {
+		if pgErr := (pgdriver.Error{}); errors.As(err, &pgErr) &&
+			pgErr.Field('C') == pgerrcode.UniqueViolation {
+			return nil, ErrBookReserved
+		}
+
 		return nil, err
 	}
 
