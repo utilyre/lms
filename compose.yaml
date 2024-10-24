@@ -9,6 +9,11 @@ services:
     ports:
       - ${DB_PORT}:5432
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   cache:
     image: redis:7.4.1-alpine3.20
@@ -30,7 +35,7 @@ services:
       JWT_SECRET: ${BE_JWT_SECRET}
     depends_on:
       database:
-        condition: service_started
+        condition: service_healthy
       cache:
         condition: service_healthy
     ports:
