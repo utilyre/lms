@@ -1,0 +1,5 @@
+- [ ] Put constraints on database columns
+- [ ] Do not let anybody borrow a reserved book (unless it's the same user)
+- [ ] Cache /reports/popular-books
+- [ ] Handle duplicated column error
+- [ ] Do todo's inside the code

@@ -10,6 +10,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"github.com/redis/go-redis/v9"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/pgdialect"
 	"github.com/uptrace/bun/driver/pgdriver"
@@ -27,11 +28,14 @@ func init() {
 }
 
 func main() {
-	log.Printf("Connecting to %s\n", os.Getenv("DB_URL"))
+	log.Printf("Connecting to database: %s\n", os.Getenv("DB_URL"))
 	sqldb := sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN(os.Getenv("DB_URL"))))
 	db := bun.NewDB(sqldb, pgdialect.New())
 
 	db.AddQueryHook(bundebug.NewQueryHook(bundebug.WithVerbose(true)))
+
+	log.Printf("Connecting to cache: %s\n", os.Getenv("CACHE_URL"))
+	rdb := redis.NewClient(&redis.Options{Addr: os.Getenv("CACHE_URL")})
 
 	if _, err := db.
 		NewCreateTable().
@@ -64,7 +68,7 @@ func main() {
 
 	userSVC := service.UserService{DB: db}
 	bookSVC := service.BookService{DB: db}
-	reportSVC := service.ReportService{DB: db}
+	reportSVC := service.ReportService{DB: db, RDB: rdb}
 
 	userHandler := handler.UserHandler{UserSVC: userSVC}
 	bookHandler := handler.BookHandler{BookSVC: bookSVC}

@@ -2,13 +2,17 @@ package service
 
 import (
 	"context"
+	"encoding/json"
+	"log"
 
+	"github.com/redis/go-redis/v9"
 	"github.com/uptrace/bun"
 	"github.com/utilyre/lms/internal/repository"
 )
 
 type ReportService struct {
-	DB bun.IDB
+	DB  bun.IDB
+	RDB *redis.Client
 }
 
 func (rs ReportService) GetOverdueLoans(ctx context.Context) ([]repository.Loan, error) {
@@ -36,9 +40,33 @@ type ReportGetPopularBooksResult struct {
 	Borrows int    `json:"borrows"`
 }
 
-func (rs ReportService) GetPopularBooks(ctx context.Context) ([]ReportGetPopularBooksResult, error) {
-	var results []ReportGetPopularBooksResult
+var (
+	keyPopularBooks = "popular-books"
+)
 
+func (rs ReportService) GetPopularBooks(ctx context.Context) ([]ReportGetPopularBooksResult, error) {
+	exists, err := rs.RDB.Exists(ctx, keyPopularBooks).Result()
+	if err != nil {
+		return nil, err
+	}
+	if exists != 0 {
+		objects, err := rs.RDB.LRange(ctx, keyPopularBooks, 0, -1).Result()
+		if err != nil {
+			return nil, err
+		}
+
+		results := make([]ReportGetPopularBooksResult, len(objects))
+		for i, obj := range objects {
+			if err := json.Unmarshal([]byte(obj), &results[i]); err != nil {
+				return nil, err
+			}
+		}
+
+		log.Println("Used cache to respond popular books")
+		return results, nil
+	}
+
+	var results []ReportGetPopularBooksResult
 	if err := rs.DB.
 		NewSelect().
 		Model((*repository.Book)(nil)).
@@ -47,6 +75,15 @@ func (rs ReportService) GetPopularBooks(ctx context.Context) ([]ReportGetPopular
 		Group("book.id").
 		Scan(ctx, &results); err != nil {
 		return nil, err
+	}
+
+	for _, result := range results {
+		data, err := json.Marshal(result)
+		if err != nil {
+			return nil, err
+		}
+
+		rs.RDB.LPush(ctx, keyPopularBooks, data)
 	}
 
 	return results, nil
