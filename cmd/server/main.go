@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"flag"
 	"log"
-	"net/http"
 	"os"
 
 	"github.com/labstack/echo/v4"
@@ -27,9 +26,12 @@ func init() {
 
 func main() {
 	log.Printf("Connecting to database: %s\n", os.Getenv("DB_URL"))
-	sqldb := sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN(os.Getenv("DB_URL"))))
-	db := bun.NewDB(sqldb, pgdialect.New())
-
+	db := bun.NewDB(
+		sql.OpenDB(
+			pgdriver.NewConnector(pgdriver.WithDSN(os.Getenv("DB_URL"))),
+		),
+		pgdialect.New(),
+	)
 	db.AddQueryHook(bundebug.NewQueryHook(bundebug.WithVerbose(true)))
 
 	log.Printf("Connecting to cache: %s\n", os.Getenv("CACHE_URL"))
@@ -39,36 +41,17 @@ func main() {
 	bookSVC := service.BookService{DB: db}
 	reportSVC := service.ReportService{DB: db, RDB: rdb}
 
-	userHandler := handler.UserHandler{UserSVC: userSVC}
-	bookHandler := handler.BookHandler{BookSVC: bookSVC}
-	reportHandler := handler.ReportHandler{ReportSVC: reportSVC}
-
 	e := echo.New()
 
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 
-	e.GET("/helloworld", func(c echo.Context) error {
-		return c.String(http.StatusOK, "Hello world!")
-	})
+	setupRoutes(
+		e,
+		handler.UserHandler{UserSVC: userSVC},
+		handler.BookHandler{BookSVC: bookSVC},
+		handler.ReportHandler{ReportSVC: reportSVC},
+	)
 
-	e.POST("/users", userHandler.Create)
-	e.PUT("/users/:id", userHandler.Update)
-	e.GET("/users/:id", userHandler.Get)
-	e.DELETE("/users/:id", userHandler.Delete)
-
-	e.DELETE("/books/:id", bookHandler.Delete)
-	e.PUT("/books/:id", bookHandler.Update)
-	e.GET("/books/:id", bookHandler.Get)
-	e.POST("/books", bookHandler.Create)
-	e.POST("/loans", bookHandler.Borrow)
-	e.PUT("/loans/:id", bookHandler.ReturnLoan)
-	e.POST("/reservations", bookHandler.Reserve)
-	e.DELETE("/reservations/:id", bookHandler.CancelReservation)
-
-	e.GET("/reports/overdue-loans", reportHandler.GetOverdueLoans)
-	e.GET("/reports/popular-books", reportHandler.GetPopularBooks)
-	e.GET("/reports/user-activity/:id", reportHandler.GetUserActivity)
-
-	e.Logger.Fatal(e.Start(":" + listenPort))
+	log.Fatal(e.Start(":" + listenPort))
 }
