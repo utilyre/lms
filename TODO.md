@@ -6,3 +6,4 @@
 - [x] Use database migrations
 - [ ] Handle custom errors in http handlers
 - [ ] Run independent tasks in parallel
+- [ ] Containerize the server
