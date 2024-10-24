@@ -1,7 +1,10 @@
 package main
 
 import (
+	"encoding/json"
+	"log"
 	"net/http"
+	"os"
 
 	"github.com/labstack/echo/v4"
 	"github.com/utilyre/lms/internal/handler"
@@ -17,21 +20,36 @@ func setupRoutes(
 		return c.String(http.StatusOK, "Hello world!")
 	})
 
-	e.POST("/users", userHandler.Create)
-	e.PUT("/users/:id", userHandler.Update)
-	e.GET("/users/:id", userHandler.Get)
-	e.DELETE("/users/:id", userHandler.Delete)
+	apiV1 := e.Group("/api/v1")
 
-	e.DELETE("/books/:id", bookHandler.Delete)
-	e.PUT("/books/:id", bookHandler.Update)
-	e.GET("/books/:id", bookHandler.Get)
-	e.POST("/books", bookHandler.Create)
-	e.POST("/loans", bookHandler.Borrow)
-	e.PUT("/loans/:id", bookHandler.ReturnLoan)
-	e.POST("/reservations", bookHandler.Reserve)
-	e.DELETE("/reservations/:id", bookHandler.CancelReservation)
+	users := apiV1.Group("/users")
+	users.POST("/", userHandler.Create)
+	users.PUT("/:id", userHandler.Update)
+	users.GET("/:id", userHandler.Get)
+	users.DELETE("/:id", userHandler.Delete)
 
-	e.GET("/reports/overdue-loans", reportHandler.GetOverdueLoans)
-	e.GET("/reports/popular-books", reportHandler.GetPopularBooks)
-	e.GET("/reports/user-activity/:id", reportHandler.GetUserActivity)
+	books := apiV1.Group("/books")
+	books.DELETE("/:id", bookHandler.Delete)
+	books.PUT("/:id", bookHandler.Update)
+	books.GET("/:id", bookHandler.Get)
+	books.POST("/", bookHandler.Create)
+
+	loans := apiV1.Group("/loans")
+	loans.POST("/", bookHandler.Borrow)
+	loans.PUT("/:id", bookHandler.ReturnLoan)
+
+	reservations := apiV1.Group("/reservations")
+	reservations.POST("/", bookHandler.Reserve)
+	reservations.DELETE("/:id", bookHandler.CancelReservation)
+
+	reports := apiV1.Group("/reports")
+	reports.GET("/overdue-loans", reportHandler.GetOverdueLoans)
+	reports.GET("/popular-books", reportHandler.GetPopularBooks)
+	reports.GET("/user-activity/:id", reportHandler.GetUserActivity)
+
+	enc := json.NewEncoder(os.Stdout)
+	enc.SetIndent("", "  ")
+	if err := enc.Encode(e.Routes()); err != nil {
+		log.Fatal(err)
+	}
 }
