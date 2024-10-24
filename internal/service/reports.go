@@ -8,7 +8,7 @@ import (
 
 	"github.com/redis/go-redis/v9"
 	"github.com/uptrace/bun"
-	"github.com/utilyre/lms/internal/repository"
+	"github.com/utilyre/lms/internal/model"
 )
 
 type ReportService struct {
@@ -16,8 +16,8 @@ type ReportService struct {
 	RDB *redis.Client
 }
 
-func (rs ReportService) GetOverdueLoans(ctx context.Context) ([]repository.Loan, error) {
-	var loans []repository.Loan
+func (rs ReportService) GetOverdueLoans(ctx context.Context) ([]model.Loan, error) {
+	var loans []model.Loan
 
 	if err := rs.DB.
 		NewSelect().
@@ -70,7 +70,7 @@ func (rs ReportService) GetPopularBooks(ctx context.Context) ([]ReportGetPopular
 	var results []ReportGetPopularBooksResult
 	if err := rs.DB.
 		NewSelect().
-		Model((*repository.Book)(nil)).
+		Model((*model.Book)(nil)).
 		ColumnExpr("book.id id, book.title title, COUNT(*) borrows").
 		Join("JOIN loans loan ON loan.book_id = book.id").
 		Group("book.id").
@@ -93,7 +93,7 @@ func (rs ReportService) GetPopularBooks(ctx context.Context) ([]ReportGetPopular
 	return results, nil
 }
 
-func (rs ReportService) GetUserActivity(ctx context.Context, id int32) ([]repository.Loan, error) {
+func (rs ReportService) GetUserActivity(ctx context.Context, id int32) ([]model.Loan, error) {
 	if id < 1 {
 		return nil, ValidationError{
 			Field: "id",
@@ -101,7 +101,7 @@ func (rs ReportService) GetUserActivity(ctx context.Context, id int32) ([]reposi
 		}
 	}
 
-	var loans []repository.Loan
+	var loans []model.Loan
 
 	if err := rs.DB.
 		NewSelect().

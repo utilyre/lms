@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/uptrace/bun"
-	"github.com/utilyre/lms/internal/repository"
+	"github.com/utilyre/lms/internal/model"
 )
 
 var (
@@ -25,7 +25,7 @@ type BookCreateParams struct {
 	ISBN   string
 }
 
-func (bs BookService) Create(ctx context.Context, params BookCreateParams) (*repository.Book, error) {
+func (bs BookService) Create(ctx context.Context, params BookCreateParams) (*model.Book, error) {
 	if len(params.Title) == 0 {
 		return nil, ValidationError{
 			Field: "title",
@@ -45,7 +45,7 @@ func (bs BookService) Create(ctx context.Context, params BookCreateParams) (*rep
 		}
 	}
 
-	book := repository.Book{
+	book := model.Book{
 		Title:              params.Title,
 		Author:             params.Author,
 		ISBN:               params.ISBN,
@@ -60,7 +60,7 @@ func (bs BookService) Create(ctx context.Context, params BookCreateParams) (*rep
 	return &book, nil
 }
 
-func (bs BookService) GetByID(ctx context.Context, id int32) (*repository.Book, error) {
+func (bs BookService) GetByID(ctx context.Context, id int32) (*model.Book, error) {
 	if id < 1 {
 		return nil, ValidationError{
 			Field: "id",
@@ -68,7 +68,7 @@ func (bs BookService) GetByID(ctx context.Context, id int32) (*repository.Book, 
 		}
 	}
 
-	var book repository.Book
+	var book model.Book
 	if err := bs.DB.
 		NewSelect().
 		Model(&book).
@@ -91,7 +91,7 @@ type BookUpdateByIDParams struct {
 	AvailabilityStatus string
 }
 
-func (bs BookService) UpdateByID(ctx context.Context, id int32, params BookUpdateByIDParams) (*repository.Book, error) {
+func (bs BookService) UpdateByID(ctx context.Context, id int32, params BookUpdateByIDParams) (*model.Book, error) {
 	if id < 1 {
 		return nil, ValidationError{
 			Field: "id",
@@ -117,7 +117,7 @@ func (bs BookService) UpdateByID(ctx context.Context, id int32, params BookUpdat
 		}
 	}
 
-	book := repository.Book{
+	book := model.Book{
 		Title:              params.Title,
 		Author:             params.Author,
 		ISBN:               params.ISBN,
@@ -153,7 +153,7 @@ func (bs BookService) DeleteByID(ctx context.Context, id int32) error {
 
 	if _, err := bs.DB.
 		NewDelete().
-		Model((*repository.Book)(nil)).
+		Model((*model.Book)(nil)).
 		Where("id = ?", id).
 		Exec(ctx); err != nil {
 		return err
@@ -167,7 +167,7 @@ type BookBorrowParams struct {
 	BookID int32
 }
 
-func (bs BookService) Borrow(ctx context.Context, params BookBorrowParams) (*repository.Loan, error) {
+func (bs BookService) Borrow(ctx context.Context, params BookBorrowParams) (*model.Loan, error) {
 	if params.UserID < 1 {
 		return nil, ValidationError{
 			Field: "user_id",
@@ -182,7 +182,7 @@ func (bs BookService) Borrow(ctx context.Context, params BookBorrowParams) (*rep
 	}
 
 	reserved := true
-	var reservation repository.Reservation
+	var reservation model.Reservation
 	if err := bs.DB.
 		NewSelect().
 		Model(&reservation).
@@ -200,7 +200,7 @@ func (bs BookService) Borrow(ctx context.Context, params BookBorrowParams) (*rep
 	}
 
 	now := time.Now()
-	loan := repository.Loan{
+	loan := model.Loan{
 		UserID:   params.UserID,
 		BookID:   params.BookID,
 		LoanDate: now,
@@ -219,7 +219,7 @@ type BookReturnLoanParams struct {
 	ReturnDate time.Time
 }
 
-func (bs BookService) ReturnLoan(ctx context.Context, params BookReturnLoanParams) (*repository.Loan, error) {
+func (bs BookService) ReturnLoan(ctx context.Context, params BookReturnLoanParams) (*model.Loan, error) {
 	if params.LoanID < 1 {
 		return nil, ValidationError{
 			Field: "loan_id",
@@ -227,7 +227,7 @@ func (bs BookService) ReturnLoan(ctx context.Context, params BookReturnLoanParam
 		}
 	}
 
-	loan := repository.Loan{
+	loan := model.Loan{
 		ID:         params.LoanID,
 		ReturnDate: sql.NullTime{Time: params.ReturnDate, Valid: true},
 	}
@@ -252,7 +252,7 @@ type BookReserveParams struct {
 	BookID int32
 }
 
-func (bs BookService) Reserve(ctx context.Context, params BookReserveParams) (*repository.Reservation, error) {
+func (bs BookService) Reserve(ctx context.Context, params BookReserveParams) (*model.Reservation, error) {
 	if params.UserID < 1 {
 		return nil, ValidationError{
 			Field: "user_id",
@@ -266,7 +266,7 @@ func (bs BookService) Reserve(ctx context.Context, params BookReserveParams) (*r
 		}
 	}
 
-	reservation := repository.Reservation{
+	reservation := model.Reservation{
 		UserID: params.UserID,
 		BookID: params.BookID,
 	}
@@ -288,7 +288,7 @@ func (bs BookService) CancelReservation(ctx context.Context, id int32) error {
 
 	if _, err := bs.DB.
 		NewDelete().
-		Model((*repository.Reservation)(nil)).
+		Model((*model.Reservation)(nil)).
 		Where("id = ?", id).
 		Exec(ctx); err != nil {
 		return err

@@ -16,7 +16,7 @@ import (
 	"github.com/uptrace/bun/driver/pgdriver"
 	"github.com/uptrace/bun/extra/bundebug"
 	"github.com/utilyre/lms/internal/handler"
-	"github.com/utilyre/lms/internal/repository"
+	"github.com/utilyre/lms/internal/model"
 	"github.com/utilyre/lms/internal/service"
 )
 
@@ -40,28 +40,28 @@ func main() {
 	if _, err := db.
 		NewCreateTable().
 		IfNotExists().
-		Model((*repository.User)(nil)).
+		Model((*model.User)(nil)).
 		Exec(context.TODO()); err != nil {
 		log.Fatal(err)
 	}
 	if _, err := db.
 		NewCreateTable().
 		IfNotExists().
-		Model((*repository.Book)(nil)).
+		Model((*model.Book)(nil)).
 		Exec(context.TODO()); err != nil {
 		log.Fatal(err)
 	}
 	if _, err := db.
 		NewCreateTable().
 		IfNotExists().
-		Model((*repository.Loan)(nil)).
+		Model((*model.Loan)(nil)).
 		Exec(context.TODO()); err != nil {
 		log.Fatal(err)
 	}
 	if _, err := db.
 		NewCreateTable().
 		IfNotExists().
-		Model((*repository.Reservation)(nil)).
+		Model((*model.Reservation)(nil)).
 		Exec(context.TODO()); err != nil {
 		log.Fatal(err)
 	}

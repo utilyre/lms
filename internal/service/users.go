@@ -8,7 +8,7 @@ import (
 	"regexp"
 
 	"github.com/uptrace/bun"
-	"github.com/utilyre/lms/internal/repository"
+	"github.com/utilyre/lms/internal/model"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -46,7 +46,7 @@ type UserCreateParams struct {
 
 var reEmail = regexp.MustCompile(`^[^@]+@[^@]+\.[^@]+$`)
 
-func (us UserService) Create(ctx context.Context, params UserCreateParams) (*repository.User, error) {
+func (us UserService) Create(ctx context.Context, params UserCreateParams) (*model.User, error) {
 	if len(params.Name) == 0 {
 		return nil, ValidationError{
 			Field: "name",
@@ -77,7 +77,7 @@ func (us UserService) Create(ctx context.Context, params UserCreateParams) (*rep
 		return nil, err
 	}
 
-	user := repository.User{
+	user := model.User{
 		Name:     params.Name,
 		Email:    params.Email,
 		Password: hash,
@@ -92,7 +92,7 @@ func (us UserService) Create(ctx context.Context, params UserCreateParams) (*rep
 	return &user, nil
 }
 
-func (us UserService) GetByID(ctx context.Context, id int32) (*repository.User, error) {
+func (us UserService) GetByID(ctx context.Context, id int32) (*model.User, error) {
 	if id < 1 {
 		return nil, ValidationError{
 			Field: "id",
@@ -100,7 +100,7 @@ func (us UserService) GetByID(ctx context.Context, id int32) (*repository.User, 
 		}
 	}
 
-	var user repository.User
+	var user model.User
 	if err := us.DB.
 		NewSelect().
 		Model(&user).
@@ -122,7 +122,7 @@ type UserUpdateByIDParams struct {
 	Role  string
 }
 
-func (us UserService) UpdateByID(ctx context.Context, id int32, params UserUpdateByIDParams) (*repository.User, error) {
+func (us UserService) UpdateByID(ctx context.Context, id int32, params UserUpdateByIDParams) (*model.User, error) {
 	if id < 1 {
 		return nil, ValidationError{
 			Field: "id",
@@ -148,7 +148,7 @@ func (us UserService) UpdateByID(ctx context.Context, id int32, params UserUpdat
 		}
 	}
 
-	user := repository.User{
+	user := model.User{
 		Name:  params.Name,
 		Email: params.Email,
 		Role:  params.Role,
@@ -183,7 +183,7 @@ func (us UserService) DeleteByID(ctx context.Context, id int32) error {
 
 	if _, err := us.DB.
 		NewDelete().
-		Model((*repository.User)(nil)).
+		Model((*model.User)(nil)).
 		Where("id = ?", id).
 		Exec(ctx); err != nil {
 		return err
