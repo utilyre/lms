@@ -1,3 +1,5 @@
+-- +goose Up
+-- +goose StatementBegin
 CREATE TABLE "users" (
     "id" SERIAL PRIMARY KEY,
 
@@ -33,3 +35,12 @@ CREATE TABLE "reservations" (
     "user_id" INTEGER NOT NULL REFERENCES "users" ON DELETE CASCADE,
     "book_id" INTEGER NOT NULL UNIQUE REFERENCES "books" ON DELETE CASCADE
 );
+-- +goose StatementEnd
+
+-- +goose Down
+-- +goose StatementBegin
+DROP TABLE "reservations";
+DROP TABLE "loans";
+DROP TABLE "books";
+DROP TABLE "users";
+-- +goose StatementEnd

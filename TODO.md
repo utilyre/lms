@@ -1,4 +1,4 @@
-- [ ] Put constraints on database columns
+- [x] Put constraints on database columns
 - [x] Do not let anybody borrow a reserved book (unless it's the same user)
 - [x] Cache /reports/popular-books
 - [ ] Handle duplicated column error

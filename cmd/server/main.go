@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"database/sql"
 	"flag"
 	"log"
@@ -16,7 +15,6 @@ import (
 	"github.com/uptrace/bun/driver/pgdriver"
 	"github.com/uptrace/bun/extra/bundebug"
 	"github.com/utilyre/lms/internal/handler"
-	"github.com/utilyre/lms/internal/model"
 	"github.com/utilyre/lms/internal/service"
 )
 
@@ -36,35 +34,6 @@ func main() {
 
 	log.Printf("Connecting to cache: %s\n", os.Getenv("CACHE_URL"))
 	rdb := redis.NewClient(&redis.Options{Addr: os.Getenv("CACHE_URL")})
-
-	if _, err := db.
-		NewCreateTable().
-		IfNotExists().
-		Model((*model.User)(nil)).
-		Exec(context.TODO()); err != nil {
-		log.Fatal(err)
-	}
-	if _, err := db.
-		NewCreateTable().
-		IfNotExists().
-		Model((*model.Book)(nil)).
-		Exec(context.TODO()); err != nil {
-		log.Fatal(err)
-	}
-	if _, err := db.
-		NewCreateTable().
-		IfNotExists().
-		Model((*model.Loan)(nil)).
-		Exec(context.TODO()); err != nil {
-		log.Fatal(err)
-	}
-	if _, err := db.
-		NewCreateTable().
-		IfNotExists().
-		Model((*model.Reservation)(nil)).
-		Exec(context.TODO()); err != nil {
-		log.Fatal(err)
-	}
 
 	userSVC := service.UserService{DB: db}
 	bookSVC := service.BookService{DB: db}
