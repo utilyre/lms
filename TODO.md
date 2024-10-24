@@ -3,4 +3,6 @@
 - [x] Cache /reports/popular-books
 - [ ] Handle duplicated column error
 - [x] Do todo's inside the code
-- [ ] Use database migrations
+- [x] Use database migrations
+- [ ] Handle custom errors in http handlers
+- [ ] Run independent tasks in parallel

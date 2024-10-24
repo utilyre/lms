@@ -7,7 +7,9 @@ import (
 	"fmt"
 	"regexp"
 
+	"github.com/jackc/pgerrcode"
 	"github.com/uptrace/bun"
+	"github.com/uptrace/bun/driver/pgdriver"
 	"github.com/utilyre/lms/internal/model"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -18,6 +20,7 @@ var (
 	ErrInvalidEmail = errors.New("invalid email")
 	ErrInvalidID    = errors.New("invalid id")
 	ErrUserNotFound = errors.New("user not found")
+	ErrUserDup      = errors.New("user duplication")
 )
 
 type ValidationError struct {
@@ -86,6 +89,11 @@ func (us UserService) Create(ctx context.Context, params UserCreateParams) (*mod
 
 	_, err = us.DB.NewInsert().Model(&user).Exec(ctx)
 	if err != nil {
+		if pgErr := (pgdriver.Error{}); errors.As(err, &pgErr) &&
+			pgErr.Field('C') == pgerrcode.UniqueViolation {
+			return nil, ErrUserDup
+		}
+
 		return nil, err
 	}
 

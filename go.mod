@@ -3,6 +3,7 @@ module github.com/utilyre/lms
 go 1.23.2
 
 require (
+	github.com/jackc/pgerrcode v0.0.0-20240316143900-6e2875d9b438
 	github.com/labstack/echo/v4 v4.12.0
 	github.com/redis/go-redis/v9 v9.7.0
 	github.com/uptrace/bun v1.2.3
