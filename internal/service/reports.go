@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"log"
+	"time"
 
 	"github.com/redis/go-redis/v9"
 	"github.com/uptrace/bun"
@@ -84,6 +85,9 @@ func (rs ReportService) GetPopularBooks(ctx context.Context) ([]ReportGetPopular
 		}
 
 		rs.RDB.LPush(ctx, keyPopularBooks, data)
+	}
+	if err := rs.RDB.Expire(ctx, keyPopularBooks, 24*time.Hour).Err(); err != nil {
+		return nil, err
 	}
 
 	return results, nil
