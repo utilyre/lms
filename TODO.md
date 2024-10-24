@@ -1,5 +1,6 @@
 - [ ] Put constraints on database columns
-- [ ] Do not let anybody borrow a reserved book (unless it's the same user)
-- [ ] Cache /reports/popular-books
+- [x] Do not let anybody borrow a reserved book (unless it's the same user)
+- [x] Cache /reports/popular-books
 - [ ] Handle duplicated column error
-- [ ] Do todo's inside the code
+- [x] Do todo's inside the code
+- [ ] Use database migrations

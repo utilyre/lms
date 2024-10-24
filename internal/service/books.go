@@ -12,6 +12,7 @@ import (
 
 var (
 	ErrBookNotFound = errors.New("book not found")
+	ErrBookReserved = errors.New("book reserved")
 )
 
 type BookService struct {
@@ -123,7 +124,6 @@ func (bs BookService) UpdateByID(ctx context.Context, id int32, params BookUpdat
 		AvailabilityStatus: params.AvailabilityStatus,
 	}
 
-	// TODO: make these a singular tx
 	if _, err := bs.DB.
 		NewUpdate().
 		Model(&book).
@@ -179,6 +179,24 @@ func (bs BookService) Borrow(ctx context.Context, params BookBorrowParams) (*rep
 			Field: "book_id",
 			Err:   ErrInvalidID,
 		}
+	}
+
+	reserved := true
+	var reservation repository.Reservation
+	if err := bs.DB.
+		NewSelect().
+		Model(&reservation).
+		Where("book_id = ?", params.BookID).
+		Scan(ctx); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			reserved = false
+		} else {
+			return nil, err
+		}
+	}
+
+	if reserved && reservation.UserID != params.UserID {
+		return nil, ErrBookReserved
 	}
 
 	now := time.Now()
