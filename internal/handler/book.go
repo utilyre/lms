@@ -220,6 +220,18 @@ func (bh BookHandler) Borrow(c echo.Context) error {
 				"message": validationErr.Error(),
 			})
 		}
+		if errors.Is(err, service.ErrBookReserved) {
+			return c.JSON(http.StatusConflict, map[string]any{
+				"type":    "logic",
+				"message": "book already reserved",
+			})
+		}
+		if errors.Is(err, service.ErrBookBorrowed) {
+			return c.JSON(http.StatusConflict, map[string]any{
+				"type":    "logic",
+				"message": "book already borrowed",
+			})
+		}
 
 		return err
 	}

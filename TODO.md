@@ -4,6 +4,7 @@
 - [x] Handle duplicated column error
 - [x] Do todo's inside the code
 - [x] Use database migrations
-- [ ] Handle custom errors in http handlers
+- [x] Handle custom errors in http handlers
 - [ ] Run independent tasks in parallel
 - [ ] Containerize the server
+- [ ] Document development process

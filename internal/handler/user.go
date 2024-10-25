@@ -149,6 +149,12 @@ func (uh UserHandler) Create(c echo.Context) error {
 				"message": validationErr.Error(),
 			})
 		}
+		if errors.Is(err, service.ErrUserDup) {
+			return c.JSON(http.StatusConflict, map[string]any{
+				"type":    "logic",
+				"message": "user already exists",
+			})
+		}
 
 		return err
 	}
