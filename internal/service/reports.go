@@ -78,17 +78,30 @@ func (rs ReportService) GetPopularBooks(ctx context.Context) ([]ReportGetPopular
 		return nil, err
 	}
 
-	for _, result := range results {
-		data, err := json.Marshal(result)
-		if err != nil {
-			return nil, err
+	go func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 4*time.Second)
+		defer cancel()
+
+		raw := make([]any, len(results))
+		for i, result := range results {
+			data, err := json.Marshal(result)
+			if err != nil {
+				log.Println("Failed to marshal popular book:", err)
+				return
+			}
+
+			raw[i] = data
 		}
 
-		rs.RDB.LPush(ctx, keyPopularBooks, data)
-	}
-	if err := rs.RDB.Expire(ctx, keyPopularBooks, 24*time.Hour).Err(); err != nil {
-		return nil, err
-	}
+		if err := rs.RDB.LPush(ctx, keyPopularBooks, raw...).Err(); err != nil {
+			log.Println("Failed to push popular books to cache:", err)
+			return
+		}
+		if err := rs.RDB.Expire(ctx, keyPopularBooks, 24*time.Hour).Err(); err != nil {
+			log.Println("Failed to set expiration time on popular books:", err)
+			return
+		}
+	}()
 
 	return results, nil
 }
