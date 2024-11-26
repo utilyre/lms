@@ -95,7 +95,7 @@ func (rs ReportService) GetPopularBooks(ctx context.Context) ([]ReportGetPopular
 			raw[i] = data
 		}
 
-		if err := rs.RDB.LPush(ctx, keyPopularBooks, raw...).Err(); err != nil {
+		if err := rs.RDB.RPush(ctx, keyPopularBooks, raw...).Err(); err != nil {
 			log.Println("Failed to push popular books to cache:", err)
 			return
 		}
