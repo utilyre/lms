@@ -62,7 +62,7 @@ func (us UserService) Create(ctx context.Context, params UserCreateParams) (*mod
 			Err:   ErrRequired,
 		}
 	}
-	if !reEmail.Match([]byte(params.Email)) {
+	if !reEmail.MatchString(params.Email) {
 		return nil, ValidationError{
 			Field: "email",
 			Err:   ErrInvalidEmail,
@@ -149,7 +149,7 @@ func (us UserService) UpdateByID(ctx context.Context, id int32, params UserUpdat
 			Err:   ErrRequired,
 		}
 	}
-	if !reEmail.Match([]byte(params.Email)) {
+	if !reEmail.MatchString(params.Email) {
 		return nil, ValidationError{
 			Field: "email",
 			Err:   ErrInvalidEmail,

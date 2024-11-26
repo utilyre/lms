@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -30,7 +31,7 @@ func (rs ReportService) GetOverdueLoans(ctx context.Context) ([]model.Loan, erro
 		}
 
 		var loans []model.Loan
-		if err := json.Unmarshal([]byte(data), &loans); err != nil {
+		if err := json.NewDecoder(strings.NewReader(data)).Decode(&loans); err != nil {
 			return nil, err
 		}
 
@@ -95,7 +96,7 @@ func (rs ReportService) GetPopularBooks(ctx context.Context) ([]ReportGetPopular
 		}
 
 		var results []ReportGetPopularBooksResult
-		if err := json.Unmarshal([]byte(data), &results); err != nil {
+		if err := json.NewDecoder(strings.NewReader(data)).Decode(&results); err != nil {
 			return nil, err
 		}
 
