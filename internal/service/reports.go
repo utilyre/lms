@@ -16,9 +16,29 @@ type ReportService struct {
 	RDB *redis.Client
 }
 
-func (rs ReportService) GetOverdueLoans(ctx context.Context) ([]model.Loan, error) {
-	var loans []model.Loan
+var keyOverdueLoans = "overdue-loans"
 
+func (rs ReportService) GetOverdueLoans(ctx context.Context) ([]model.Loan, error) {
+	exists, err := rs.RDB.Exists(ctx, keyOverdueLoans).Result()
+	if err != nil {
+		return nil, err
+	}
+	if exists != 0 {
+		data, err := rs.RDB.Get(ctx, keyOverdueLoans).Result()
+		if err != nil {
+			return nil, err
+		}
+
+		var loans []model.Loan
+		if err := json.Unmarshal([]byte(data), &loans); err != nil {
+			return nil, err
+		}
+
+		log.Println("Used cache to respond overdue loans")
+		return loans, nil
+	}
+
+	var loans []model.Loan
 	if err := rs.DB.
 		NewSelect().
 		Model(&loans).
@@ -31,6 +51,24 @@ func (rs ReportService) GetOverdueLoans(ctx context.Context) ([]model.Loan, erro
 		Scan(ctx); err != nil {
 		return nil, err
 	}
+
+	go func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 4*time.Second)
+		defer cancel()
+
+		data, err := json.Marshal(loans)
+		if err != nil {
+			log.Println("Failed to marshal overdue loans:", err)
+			return
+		}
+
+		if err := rs.RDB.Set(ctx, keyOverdueLoans, data, time.Hour).Err(); err != nil {
+			log.Println("Failed to set overdue loans in cache:", err)
+			return
+		}
+
+		log.Println("Cached overdue loans")
+	}()
 
 	return loans, nil
 }
@@ -92,6 +130,8 @@ func (rs ReportService) GetPopularBooks(ctx context.Context) ([]ReportGetPopular
 			log.Println("Failed to set popular books in cache:", err)
 			return
 		}
+
+		log.Println("Cached popular books")
 	}()
 
 	return results, nil
