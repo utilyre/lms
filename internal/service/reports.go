@@ -74,6 +74,8 @@ func (rs ReportService) GetPopularBooks(ctx context.Context) ([]ReportGetPopular
 		ColumnExpr("book.id id, book.title title, COUNT(*) borrows").
 		Join("JOIN loans loan ON loan.book_id = book.id").
 		Group("book.id").
+		Order("borrows DESC").
+		Limit(10).
 		Scan(ctx, &results); err != nil {
 		return nil, err
 	}
