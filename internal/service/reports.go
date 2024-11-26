@@ -51,16 +51,14 @@ func (rs ReportService) GetPopularBooks(ctx context.Context) ([]ReportGetPopular
 		return nil, err
 	}
 	if exists != 0 {
-		objects, err := rs.RDB.LRange(ctx, keyPopularBooks, 0, -1).Result()
+		data, err := rs.RDB.Get(ctx, keyPopularBooks).Result()
 		if err != nil {
 			return nil, err
 		}
 
-		results := make([]ReportGetPopularBooksResult, len(objects))
-		for i, obj := range objects {
-			if err := json.Unmarshal([]byte(obj), &results[i]); err != nil {
-				return nil, err
-			}
+		var results []ReportGetPopularBooksResult
+		if err := json.Unmarshal([]byte(data), &results); err != nil {
+			return nil, err
 		}
 
 		log.Println("Used cache to respond popular books")
@@ -84,23 +82,14 @@ func (rs ReportService) GetPopularBooks(ctx context.Context) ([]ReportGetPopular
 		ctx, cancel := context.WithTimeout(context.Background(), 4*time.Second)
 		defer cancel()
 
-		raw := make([]any, len(results))
-		for i, result := range results {
-			data, err := json.Marshal(result)
-			if err != nil {
-				log.Println("Failed to marshal popular book:", err)
-				return
-			}
-
-			raw[i] = data
-		}
-
-		if err := rs.RDB.RPush(ctx, keyPopularBooks, raw...).Err(); err != nil {
-			log.Println("Failed to push popular books to cache:", err)
+		data, err := json.Marshal(results)
+		if err != nil {
+			log.Println("Failed to marshal popular book:", err)
 			return
 		}
-		if err := rs.RDB.Expire(ctx, keyPopularBooks, 24*time.Hour).Err(); err != nil {
-			log.Println("Failed to set expiration time on popular books:", err)
+
+		if err := rs.RDB.Set(ctx, keyPopularBooks, data, 24*time.Hour).Err(); err != nil {
+			log.Println("Failed to set popular books in cache:", err)
 			return
 		}
 	}()
